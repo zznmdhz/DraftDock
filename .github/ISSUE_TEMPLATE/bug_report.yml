@@ -1,0 +1,37 @@
+name: Bug report
+description: 报告目录扫描、图片适配、复制或导出问题
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: textarea
+    attributes:
+      label: 使用场景
+      description: 使用的平台入口、内容目录结构和素材格式。
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 复现步骤
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 期望结果与实际结果
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: DraftDock 版本
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Windows 版本
+      placeholder: Windows 11 24H2
+  - type: checkboxes
+    attributes:
+      label: 隐私确认
+      options:
+        - label: 我已确认描述和附件中不包含私密文章、账号凭据或平台 Cookie。
+          required: true

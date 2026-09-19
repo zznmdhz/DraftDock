@@ -1,0 +1,9 @@
+node_modules/
+out/
+release/
+.local/
+.sites-runtime/
+*.log
+.DS_Store
+Thumbs.db
+examples/content-root/**/.draftdock/

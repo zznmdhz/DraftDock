@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+  <rect width="900" height="1200" fill="#1b3d3a"/><rect x="70" y="70" width="760" height="1060" rx="36" fill="#f3f0e8"/>
+  <text x="130" y="240" fill="#ef5a3c" font-family="Microsoft YaHei,sans-serif" font-size="30" font-weight="700">01 / WORKFLOW</text>
+  <text x="130" y="390" fill="#172033" font-family="Microsoft YaHei,sans-serif" font-size="72" font-weight="700">原图只读</text>
+  <text x="130" y="480" fill="#172033" font-family="Microsoft YaHei,sans-serif" font-size="72" font-weight="700">交付图派生</text>
+  <path d="M130 630h640M130 700h520M130 770h590" stroke="#9aa4a0" stroke-width="18" stroke-linecap="round" opacity=".5"/>
+  <text x="130" y="1020" fill="#50625f" font-family="Microsoft YaHei,sans-serif" font-size="30">同一张图，可以生成多个平台版本</text>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#192640"/><stop offset="1" stop-color="#ee6444"/></linearGradient></defs>
+  <rect width="1200" height="760" fill="url(#g)"/><circle cx="910" cy="210" r="230" fill="#fff" opacity=".08"/><circle cx="1060" cy="540" r="170" fill="#fff" opacity=".08"/>
+  <text x="82" y="570" fill="#fff" font-family="Microsoft YaHei,sans-serif" font-size="72" font-weight="700">从内容到发布</text>
+  <text x="84" y="630" fill="#fff" opacity=".72" font-family="Microsoft YaHei,sans-serif" font-size="30">DraftDock · 原图演示</text>
+</svg>
