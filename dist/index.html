@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="稿间 DraftDock：把一篇主稿和一组图片整理成公众号与小红书可用的发布材料。" />
+  <title>稿间 · DraftDock</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23131b2e'/%3E%3Cpath d='M17 17h20l10 10v20H17z' fill='none' stroke='%23ff6b45' stroke-width='5' stroke-linejoin='round'/%3E%3Cpath d='M37 17v10h10' fill='none' stroke='%23ff6b45' stroke-width='5'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./responsive.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand" aria-label="稿间 DraftDock">
+      <span class="brand-mark">稿</span>
+      <div><strong>稿间</strong><span>DraftDock</span></div>
+    </div>
+    <nav class="platform-tabs" aria-label="内容版本">
+      <button class="platform-tab" data-platform="master">主稿</button>
+      <button class="platform-tab active" data-platform="wechat">公众号文章</button>
+      <button class="platform-tab" data-platform="xhs">小红书图文</button>
+    </nav>
+    <div class="header-actions">
+      <span class="save-state"><i></i> 本机自动保存</span>
+      <button class="icon-button" id="trayToggle" title="切换发布托盘">◫</button>
+      <button class="primary-button" id="readyButton">准备交付</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="library panel">
+      <div class="panel-heading">
+        <div><span class="eyebrow">ARTICLE LIBRARY</span><h1>文章库</h1></div>
+        <button class="icon-button" id="newArticle" aria-label="新建文章">＋</button>
+      </div>
+      <label class="search"><span>⌕</span><input id="articleSearch" placeholder="搜索标题或日期" /></label>
+      <button class="import-button" id="importTrigger"><span>↥</span><span><b>接入内容包</b><small>Markdown、文字与图片</small></span></button>
+      <input id="fileInput" type="file" accept=".md,.txt,image/*" multiple hidden />
+      <div class="section-label"><span>今天</span><span>3 篇</span></div>
+      <div class="article-list" id="articleList">
+        <button class="article-item active" data-id="1">
+          <span class="article-date">09:42</span>
+          <span class="article-title">把 AI 生成内容变成真正能发布的材料</span>
+          <span class="article-meta"><i class="dot orange"></i> 公众号待准备 <i class="dot red"></i> 小红书待准备</span>
+        </button>
+        <button class="article-item" data-id="2">
+          <span class="article-date">08:15</span>
+          <span class="article-title">三个方法，让工具替你减少内容搬运</span>
+          <span class="article-meta"><i class="dot green"></i> 公众号已发布 <i class="dot orange"></i> 小红书待准备</span>
+        </button>
+        <button class="article-item" data-id="3">
+          <span class="article-date">昨天</span>
+          <span class="article-title">从草稿到成稿：我的内容工作流</span>
+          <span class="article-meta"><i class="dot blue"></i> 材料已就绪</span>
+        </button>
+      </div>
+      <div class="library-footer"><span>本地内容目录</span><button>在电脑中打开 ↗</button></div>
+    </aside>
+
+    <section class="assets panel">
+      <div class="panel-heading asset-heading">
+        <div><span class="eyebrow">VISUAL ASSETS</span><h2>图片工作区 <span id="assetCount">3</span></h2></div>
+        <div class="asset-tools"><button id="selectAll">全选</button><button class="icon-button" id="addImages">＋</button></div>
+      </div>
+      <div class="usage-strip">
+        <div><span class="platform-icon wechat">微</span><span><b id="usageTitle">公众号文章</b><small id="usageHint">横封面建议 2.35:1，正文图保留原比例</small></span></div>
+        <span class="rule-badge">规则可配置</span>
+      </div>
+      <div class="dropzone" id="dropzone"><span>＋</span>拖入图片，或点击添加</div>
+      <div class="asset-list" id="assetList"></div>
+    </section>
+
+    <section class="editor panel">
+      <div class="panel-heading editor-heading">
+        <div><span class="eyebrow">CONTENT & DELIVERY</span><h2>正文与交付</h2></div>
+        <span class="version-badge" id="versionBadge">公众号版本</span>
+      </div>
+      <div class="field-group compact"><label for="titleInput">标题</label><input id="titleInput" value="把 AI 生成内容变成真正能发布的材料" /><small><span id="titleCount">21</span> 字 · 平台限制待实测</small></div>
+      <div class="editor-block">
+        <div class="block-tabs"><button class="active">编辑正文</button><button>插图指引 <span>3</span></button></div>
+        <textarea id="bodyInput" spellcheck="false"></textarea>
+        <div class="editor-status"><span><i></i> 已同步到本机</span><span id="bodyCount">0 字</span></div>
+      </div>
+      <div class="preview-block">
+        <div class="preview-head"><span>平台输出预览</span><span id="previewMode">公众号富文本</span></div>
+        <article id="preview"></article>
+      </div>
+      <div class="delivery-bar">
+        <button id="copyPrimary" class="primary-button">复制公众号排版</button>
+        <button id="copyMenu">复制 Markdown</button>
+        <button id="exportWord">导出 Word</button>
+      </div>
+      <div class="delivery-note"><span>提示</span><p>复制正文后，再按中栏顺序上传图片；“已发布”由你手动确认。</p></div>
+    </section>
+  </main>
+
+  <dialog id="cropDialog" class="crop-dialog">
+    <form method="dialog">
+      <div class="dialog-head"><div><span class="eyebrow">IMAGE ADAPTATION</span><h2>图片适配</h2></div><button class="icon-button" value="cancel">×</button></div>
+      <div class="crop-layout">
+        <div class="crop-stage"><canvas id="cropCanvas" width="720" height="540"></canvas><span class="crop-help">拖动图片调整构图</span></div>
+        <div class="crop-settings">
+          <fieldset><legend>用途预设</legend><div class="ratio-grid" id="ratioGrid">
+            <button type="button" data-ratio="2.35" class="active">2.35:1<small>横封面</small></button>
+            <button type="button" data-ratio="1">1:1<small>方形</small></button>
+            <button type="button" data-ratio="0.75">3:4<small>竖图</small></button>
+            <button type="button" data-ratio="0.5625">9:16<small>全屏竖图</small></button>
+          </div></fieldset>
+          <fieldset><legend>适配方式</legend><div class="mode-switch"><button type="button" data-mode="cover" class="active">裁切填满</button><button type="button" data-mode="contain">完整留边</button></div></fieldset>
+          <label>缩放 <input id="zoomRange" type="range" min="1" max="2.5" step="0.01" value="1" /></label>
+          <label>留边颜色 <input id="bgColor" type="color" value="#f4f1eb" /></label>
+        </div>
+      </div>
+      <div class="dialog-actions"><button value="cancel">取消</button><button id="applyCrop" type="button" class="primary-button">生成交付图片</button></div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="./app.js"></script>
+</body>
+</html>
