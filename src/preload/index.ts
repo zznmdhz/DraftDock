@@ -2,6 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type { ClipboardInput, DraftDockApi, ExportDocxInput, GenerateAssetInput, LibrarySnapshot, SaveDraftInput } from '../shared/types'
 
 const api: DraftDockApi = {
+  openLogs: () => ipcRenderer.invoke('diagnostics:open'),
+  report: (input) => ipcRenderer.send('diagnostics:report', input),
   getLibrary: () => ipcRenderer.invoke('library:get'),
   chooseRoot: () => ipcRenderer.invoke('library:choose-root'),
   refreshLibrary: () => ipcRenderer.invoke('library:refresh'),

@@ -93,6 +93,8 @@ export interface ClipboardInput {
 }
 
 export interface DraftDockApi {
+  openLogs(): Promise<string>
+  report(input: { level: 'info' | 'error'; event: string; message: string }): void
   getLibrary(): Promise<LibrarySnapshot>
   chooseRoot(): Promise<LibrarySnapshot>
   refreshLibrary(): Promise<LibrarySnapshot>

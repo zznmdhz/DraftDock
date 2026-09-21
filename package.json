@@ -1,6 +1,6 @@
 {
   "name": "draftdock",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local-first publishing workbench for preparing Markdown and images for WeChat Official Accounts and Xiaohongshu.",
   "main": "out/main/index.js",
   "type": "module",
