@@ -11,3 +11,10 @@ Windows x64安装版可升级原安装，便携版可直接运行。原始文章
 这仍是本地发布准备台，不自动登录或代发；目标账号是本地标记。多账号模板、X串文/长文、知乎回答、精确插图、批量队列和发布日历仍列为后续范围。未知平台上限不写成假硬限制，图片预设是工作建议。平台后台最终排版和上传仍需人工确认。
 
 完整审计、实施清单与验证记录见仓库 `docs/OPTIMIZATION-PLAN.md` 和 `docs/audit/`。
+
+类型检查和49项本地回归全部通过；真实图包副本的打包程序完整窗口回归、1180×720布局检查通过。[云端Windows完整流水线](https://github.com/zznmdhz/DraftDock/actions/runs/37428471060)亦全部成功，包括49项测试、正式打包、两套窗口检查与构建物上传。
+
+```text
+FF67DA2D51D4A90D3AF12C7C85D57CD46B32B1D3A9EAB66A6B443C75C33DFDC8  DraftDock-Setup-0.2.1-x64.exe
+4DCCF92E7BA0E9119731A12B52EB121E2B8FD193CDB8E10BF26894C609282B01  DraftDock-Portable-0.2.1-x64.exe
+```

@@ -52,7 +52,7 @@
 | O07 | P1 | 一键发布包 | 含标题、正文、Markdown、HTML、PNG图集、清单和manifest；图失败无半成品包 | 完成，完整性/失败清理测试通过 |
 | O08 | P1 | 人工发布记录 | 保存账号标记、draft/ready/published、链接、备注；不把导出当发布 | 完成，保存及交付manifest验证通过 |
 | O09 | P1 | 桌面可用性和诊断 | 五个平台tab可达、loading/error/empty态可辨认、日志不遮挡交付按钮 | 完成，正常/1180×720窗口检查通过 |
-| O10 | P1 | 集成验证与Windows安装包 | 类型检查/回归测试/打包真实页面检查通过，真实图包副本验证 | 完成，45项回归和打包程序检查通过 |
+| O10 | P1 | 集成验证与Windows安装包 | 类型检查/回归测试/打包真实页面检查通过，真实图包副本验证 | 完成，49项回归和打包程序检查通过 |
 
 ## 6. 后续版本（本轮不宣称完成）
 
@@ -77,16 +77,18 @@
 
 已实现并验证 O01–O10。第一次桌面回归在“输入后立即 window.close()”发现末尾输入未保存：Chromium先卸载页面，BrowserWindow关闭拦截不足。已增加preload beforeunload保活、保存确认后准许卸载，真实用户手势的桌面回归已通过（无手势的调试调用会被Chromium特殊处理，脚本已明确设置userGesture）。失败过程明确保留，不能以单元测试通过代替桌面验收。
 
-截至本轮：8个测试文件、45项Vitest回归全部通过，Node/Renderer类型检查通过。包含真实junction/symlink、损坏状态保护、清空预算、外部删除派生文件等边界。测试中的不可写日志与TIFF警告为故意触发的失败容错场景，不代表运行白屏。
+截至最终0.2.1：8个测试文件、49项Vitest回归全部通过，Node/Renderer类型检查通过。包含真实junction/symlink、合法目录/短路径别名、损坏状态保护、清空预算、外部删除派生文件等边界。测试中的不可写日志与TIFF警告为故意触发的失败容错场景，不代表运行白屏。
 
-最终Windows x64包位于本地 `B:\Sync_AI\DraftDock\release\DraftDock-Setup-0.2.0-x64.exe` 和 `DraftDock-Portable-0.2.0-x64.exe`。没有卸载或覆盖你已有安装；运行新版安装包可升级。本轮所有原图包测试均复制到临时目录，未回写原素材。
+最终Windows x64包位于本地 `B:\Sync_AI\DraftDock\release\DraftDock-Setup-0.2.1-x64.exe` 和 `DraftDock-Portable-0.2.1-x64.exe`。没有卸载或覆盖你已有安装；运行新版安装包可升级。本轮所有原图包测试均复制到临时目录，未回写原素材。
 
 打包程序验证：`node scripts/smoke-packaged.mjs` 启动页/preload/IPC/日志通过；传入真实图包时识别2份正文、10张图片，当前交付默认排除九图预览。`node scripts/smoke-workflow.mjs <打包exe> <真实图包>` 在真实副本加独立第二篇后通过根README隔离、立即平台切换保存、图片取消/排序持久化、缩小构图并从界面生成/选用新图、四平台完整交付、原素材SHA-256不变、来源历史恢复、立即重载与关闭保存。标准及1180×720视口的主要按钮均可达。
 
-本机证据目录：完整打包工作流截图/日志位于 `C:\Users\lishu\AppData\Local\Temp\draftdock-workflow-JbZVLr`，真实图包启动/裁切截图位于 `draftdock-smoke-ix91Mb`，启动页位于 `draftdock-smoke-8q4BnL`。这些为本机临时证据，不上传包含素材内容的截图到公开仓库。脚本可复跑生成新的证据。
+本机证据目录：最终0.2.1完整打包工作流截图/日志位于 `C:\Users\lishu\AppData\Local\Temp\draftdock-workflow-kkhXr6`，启动页位于 `draftdock-smoke-iCpNck`。上一轮真实图包启动/裁切截图位于 `draftdock-smoke-ix91Mb`。这些为本机临时证据，不上传包含素材内容的截图到公开仓库。脚本可复跑生成新的证据。
 
 本轮明确未实现：真正多账号/账号默认模板、自动拆串文或长文、知乎回答、精确插图位置、批量队列、发布日历/指标和授权API。这些属于第6节后续范围，不把本地账号标记或素材导出等同于已完成账号运营系统。
 
 云端补充回归：GitHub Windows runner的临时用户目录使用8.3短路径别名，原边界检查混用了lexical路径与realpath，导致合法图片被误拒。0.2.1将素材与来源匹配归一到真实路径，保留真正越界检查，并新增合法目录别名的生成、交付和来源回归。此问题不靠跳过测试或放宽安全边界处理。
+
+最终公开交付：[GitHub v0.2.1 安装版/便携版/校验和](https://github.com/zznmdhz/DraftDock/releases/tag/v0.2.1)。应用代码提交 `e6ad7c3e93f79ec016e44f750febc2dc49e592d2` 的 [Windows CI](https://github.com/zznmdhz/DraftDock/actions/runs/37428471060) 全部成功：类型检查、49项测试、构建、NSIS/portable打包、启动诊断检查、完整桌面工作流检查及构建物上传。本轮的验证结果文档更新不改变已验证的应用代码。
 
 已知兼容边界：DOCX支持基本标题、段落、列表与附后图片，不完整复刻Markdown表格/代码样式；HTML交付包作为结构化预览。平台后台粘贴和图片上传接受度仍需登录实际账号人工实测，本轮不会自动发布到你的账号。素材库移动后的绝对路径恢复仍需重新选来源和图片。
