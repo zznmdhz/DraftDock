@@ -1,6 +1,6 @@
 {
   "name": "draftdock",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Local-first multi-platform publishing workbench for WeChat, Xiaohongshu, X and Zhihu.",
   "main": "out/main/index.js",
   "type": "module",

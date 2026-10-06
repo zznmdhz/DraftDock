@@ -2,7 +2,7 @@
 
 Windows 本地优先的多平台内容发布准备台：从现有 Markdown/TXT 和图片素材包，整理出微信公众号、小红书、X、知乎的独立工作稿与交付材料。原始素材不覆盖，发布由人确认。
 
-当前版本：**0.2.0**。本轮全面检查、问题优先级与验收记录见 [优化修改文档](docs/OPTIMIZATION-PLAN.md)。
+当前版本：**0.2.1**。包含0.2完整工作流与Windows短路径别名兼容修复。本轮全面检查、问题优先级与验收记录见 [优化修改文档](docs/OPTIMIZATION-PLAN.md)。
 
 [下载 Windows 安装版与便携版](https://github.com/zznmdhz/DraftDock/releases/latest)
 

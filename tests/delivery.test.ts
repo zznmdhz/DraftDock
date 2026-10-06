@@ -131,4 +131,22 @@ describe('complete local publishing deliveries', () => {
     await expect(exportDeliveryBundle(input)).rejects.toThrow('交付目录不在当前文章内')
     expect(await fs.readdir(outside)).toEqual(['private.png'])
   })
+
+  it('accepts legal aliases for the article, original and recorded derivative using canonical containment', async () => {
+    const { folder, first, input } = await fixture()
+    const aliasContainer = await fs.mkdtemp(path.join(os.tmpdir(), 'draftdock-delivery-alias-'))
+    created.push(aliasContainer)
+    const alias = path.join(aliasContainer, 'article-link')
+    await fs.symlink(folder, alias, 'junction')
+    const output = await derivative(folder, first, 'wechat')
+    const aliasOutput = path.join(alias, path.relative(await fs.realpath(folder), await fs.realpath(output)))
+    input.draft.images = [{ sourcePath: path.join(alias, 'first.png'), outputPath: aliasOutput }]
+    const result = await exportDeliveryBundle(input)
+    expect(result.imageCount).toBe(1)
+    const manifest = JSON.parse(await fs.readFile(path.join(result.outputFolder, 'manifest.json'), 'utf8'))
+    expect(manifest.images[0].sourcePath).toBe('first.png')
+    expect(manifest.images[0].derived).toBe(true)
+    const fromAliasRoot = await exportDeliveryBundle({ ...input, articleFolder: alias })
+    expect(fromAliasRoot.outputFolder).not.toBe(result.outputFolder)
+  })
 })

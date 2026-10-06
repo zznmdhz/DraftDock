@@ -16,8 +16,12 @@ function markdownTitle(title: string): string { return title.replace(/[\r\n]+/g,
 
 async function imageWithin(root: string, candidate: string): Promise<string> {
   const lexical = path.resolve(candidate)
-  if (!inside(root, lexical) || !IMAGE_EXTENSIONS.has(path.extname(lexical).toLowerCase())) throw new Error('交付图片必须是当前文章内的有效图片文件')
-  const resolved = await fs.realpath(lexical)
+  if (!IMAGE_EXTENSIONS.has(path.extname(lexical).toLowerCase())) throw new Error('交付图片必须是当前文章内的有效图片文件')
+  // Containment must compare real paths on both sides, including Windows 8.3 names and safe directory aliases.
+  const resolved = await fs.realpath(lexical).catch(error => {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new Error('当前文章交付图片不存在或已移动')
+    throw error
+  })
   if (!inside(root, resolved) || !(await fs.stat(resolved)).isFile()) throw new Error('交付图片路径不在当前文章内')
   return resolved
 }

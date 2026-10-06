@@ -39,9 +39,9 @@ async function loadSettings(): Promise<void> {
   try {
     const settings = JSON.parse(await fs.readFile(settingsPath(), 'utf8')) as { contentRoot?: string; mode?: LibraryMode }
     if (settings.mode && ['auto', 'package', 'library'].includes(settings.mode)) libraryMode = settings.mode
-    if (settings.contentRoot && await fs.stat(settings.contentRoot).then((stat) => stat.isDirectory()).catch(() => false)) contentRoot = settings.contentRoot
+    if (settings.contentRoot && await fs.stat(settings.contentRoot).then((stat) => stat.isDirectory()).catch(() => false)) contentRoot = await fs.realpath(settings.contentRoot)
   } catch (error) { contentRoot = null; logger.write('warn', 'settings.load', error) }
-  if (developmentRoot && await fs.stat(developmentRoot).then((stat) => stat.isDirectory()).catch(() => false)) contentRoot = developmentRoot
+  if (developmentRoot && await fs.stat(developmentRoot).then((stat) => stat.isDirectory()).catch(() => false)) contentRoot = await fs.realpath(developmentRoot)
 }
 
 async function saveSettings(): Promise<void> {
@@ -251,7 +251,7 @@ function registerIpc(): void {
   handle('library:choose-root', async (_event, mode: LibraryMode = 'auto') => {
     if (!['auto', 'package', 'library'].includes(mode)) throw new Error('无效的目录模式')
     const result = await dialog.showOpenDialog(mainWindow!, { title: '选择内容根目录', properties: ['openDirectory', 'createDirectory'] })
-    if (!result.canceled && result.filePaths[0]) { contentRoot = result.filePaths[0]; libraryMode = mode; await saveSettings(); startWatcher() }
+    if (!result.canceled && result.filePaths[0]) { contentRoot = await fs.realpath(result.filePaths[0]); libraryMode = mode; await saveSettings(); startWatcher() }
     return currentLibrary()
   })
   handle('library:refresh', () => currentLibrary())

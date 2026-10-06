@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { mkdtemp, readFile, writeFile, mkdir, cp, readdir } from 'node:fs/promises'
+import { mkdtemp, readFile, writeFile, mkdir, cp, readdir, realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { createHash, randomUUID } from 'node:crypto'
@@ -10,7 +10,7 @@ import sharp from 'sharp'
 // For quick built-main verification, DRAFTDOCK_SMOKE_APP may point to the Electron app directory.
 // All mutations target an isolated temporary copy; user source files are never edited.
 const exe = path.resolve(process.argv[2] ?? 'release/win-unpacked/稿间 DraftDock.exe')
-const profile = await mkdtemp(path.join(tmpdir(), 'draftdock-workflow-'))
+const profile = await realpath(await mkdtemp(path.join(tmpdir(), 'draftdock-workflow-')))
 const content = path.join(profile, 'content')
 const firstFolder = path.join(content, 'article-under-test')
 const secondFolder = path.join(content, 'second-article')

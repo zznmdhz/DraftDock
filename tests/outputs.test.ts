@@ -43,7 +43,7 @@ describe('non-destructive image outputs', () => {
     expect((await sharp(first.outputPath).metadata()).height).toBe(383)
     const manifest = JSON.parse(await fs.readFile(path.join(articleFolder, '.draftdock', 'manifest.json'), 'utf8'))
     expect(manifest.assets).toHaveLength(2)
-    expect(manifest.assets[0].sourcePath).toBe(sourcePath)
+    expect(manifest.assets[0].sourcePath).toBe(await fs.realpath(sourcePath))
   })
 
   it('contains the whole image with a background instead of stretching', async () => {
@@ -121,5 +121,21 @@ describe('non-destructive image outputs', () => {
     await fs.writeFile(path.join(outside, 'manifest.json'), '{"version":1,"assets":[]}')
     await expect(generateDerivedAsset(input)).rejects.toThrow('派生记录路径')
     expect(await fs.readdir(outside)).toEqual(['external.png', 'manifest.json'])
+  })
+
+  it('accepts a safe directory alias whose real source remains inside the canonical article', async () => {
+    const articleFolder = await fs.mkdtemp(path.join(os.tmpdir(), 'draftdock-alias-'))
+    const aliasContainer = await fs.mkdtemp(path.join(os.tmpdir(), 'draftdock-alias-container-'))
+    created.push(articleFolder, aliasContainer)
+    const sourcePath = path.join(articleFolder, 'source.png'), alias = path.join(aliasContainer, 'article-link')
+    await sharp({ create: { width: 60, height: 40, channels: 3, background: '#ffaa33' } }).png().toFile(sourcePath)
+    await fs.symlink(articleFolder, alias, 'junction')
+    const result = await generateDerivedAsset({ articleFolder, sourcePath: path.join(alias, 'source.png'), platform: 'wechat', presetId: 'square', width: 30, height: 30, mode: 'contain' })
+    expect(result.sourcePath).toBe(await fs.realpath(sourcePath))
+    expect(path.relative(await fs.realpath(articleFolder), result.outputPath)).not.toMatch(/^\.\./)
+    const second = await generateDerivedAsset({ articleFolder: alias, sourcePath, platform: 'wechat', presetId: 'square', width: 30, height: 30, mode: 'contain' })
+    expect(second.outputPath).not.toBe(result.outputPath)
+    const manifest = JSON.parse(await fs.readFile(path.join(articleFolder, '.draftdock', 'manifest.json'), 'utf8'))
+    expect(manifest.assets).toHaveLength(2)
   })
 })

@@ -190,3 +190,42 @@ test('deleted, external and malformed derived outputs are hidden with warnings w
   expect(await fs.readFile(manifestFile, 'utf8')).toBe(bytes)
   expect((await fs.stat(external)).isFile()).toBe(true)
 })
+
+test('reading a legitimate article through a directory alias matches its canonical generated versions', async () => {
+  const folder = await fixture(), aliasParent = await fixture(), alias = path.join(aliasParent, '合法文章别名')
+  const canonical = await fs.realpath(folder), source = path.join(canonical, 'source.svg')
+  await fs.writeFile(path.join(canonical, 'article.md'), '正文')
+  await fs.writeFile(source, '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="20"><rect width="30" height="20" fill="red"/></svg>')
+  const output = await generateDerivedAsset({ articleFolder: canonical, sourcePath: source, platform: 'wechat', presetId: 'wechat-cover', width: 30, height: 20, mode: 'cover' })
+  await fs.symlink(canonical, alias, process.platform === 'win32' ? 'junction' : 'dir')
+  const manifest = path.join(canonical, '.draftdock', 'manifest.json'), bytes = await fs.readFile(manifest, 'utf8')
+  const article = (await scanLibrary(alias, 'package')).articles[0]
+  expect(article.images[0].path).toBe(path.join(alias, 'source.svg'))
+  expect(article.images[0].derivatives.map(item => item.id)).toEqual([output.id])
+  expect(article.warnings).toEqual([])
+  expect(await fs.readFile(manifest, 'utf8')).toBe(bytes)
+})
+
+test('source selections stored through a legitimate alias resolve after canonical root reopening without reading outside files', async () => {
+  const folder = await fixture(), aliasParent = await fixture(), alias = path.join(aliasParent, '文章别名'), outside = await fixture()
+  const canonical = await fs.realpath(folder), md = path.join(canonical, '01.md'), txt = path.join(canonical, '02.txt')
+  await fs.writeFile(md, '第一正文')
+  await fs.writeFile(txt, '第二正文')
+  await fs.symlink(canonical, alias, process.platform === 'win32' ? 'junction' : 'dir')
+  await selectSources(alias, [path.join(alias, '02.txt'), path.join(alias, '01.md')])
+  const article = (await scanLibrary(canonical, 'package')).articles[0]
+  expect(article.selectedSources).toEqual([txt, md])
+  expect(article.markdown).toBe('第二正文\n\n第一正文')
+  expect(article.warnings.some(warning => warning.includes('移动或删除'))).toBe(false)
+  await selectSources(canonical, [path.join(alias, '01.md')])
+  expect((await scanLibrary(canonical)).articles[0].selectedSources).toEqual([md])
+  const external = path.join(outside, 'secret.md')
+  await fs.writeFile(external, '不得读取到主稿的外部正文')
+  await expect(selectSources(canonical, [external])).rejects.toThrow('文章目录')
+  const stateFile = path.join(canonical, '.draftdock', 'state.json'), state = JSON.parse(await fs.readFile(stateFile, 'utf8'))
+  state.selectedSources = [external]
+  await fs.writeFile(stateFile, JSON.stringify(state))
+  const invalid = (await scanLibrary(canonical)).articles[0]
+  expect(invalid.markdown).toBe('')
+  expect(invalid.warnings.some(warning => warning.includes('移动或删除'))).toBe(true)
+})

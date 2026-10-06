@@ -79,12 +79,19 @@ function validDerivative(value: unknown): value is DerivedAsset {
 
 async function availableDerivatives(folder: string, records: unknown[], warnings: string[]): Promise<DerivedAsset[]> {
   const realFolder = await fs.realpath(folder), valid: DerivedAsset[] = []
+  const inside = (candidate: string): boolean => { const relative = path.relative(realFolder, candidate); return relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative) }
+  const sourcePaths = new Map<string, Promise<string>>()
   for (const [index, item] of records.entries()) {
     if (!validDerivative(item)) { warnings.push(`交付图记录 ${index + 1} 格式无效，已隐藏；原记录保留`); continue }
     try {
-      const resolved = await fs.realpath(item.outputPath), relative = path.relative(realFolder, resolved)
-      if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative) || !(await fs.stat(resolved)).isFile()) throw new Error('文件越界或不是有效文件')
-      valid.push(item)
+      const resolved = await fs.realpath(item.outputPath)
+      if (!inside(resolved) || !(await fs.stat(resolved)).isFile()) throw new Error('文件越界或不是有效文件')
+      let source = sourcePaths.get(item.sourcePath)
+      if (!source) { source = fs.realpath(item.sourcePath); sourcePaths.set(item.sourcePath, source) }
+      const canonicalSource = await source
+      if (!inside(canonicalSource)) throw new Error('图片来源越过文章目录')
+      // Resolve aliases for matching only. The manifest remains unchanged on disk.
+      valid.push({ ...item, sourcePath: canonicalSource })
     } catch { warnings.push(`交付图已失效或不在文章目录内：${path.basename(item.outputPath)}，原记录保留`) }
   }
   return valid
@@ -136,11 +143,32 @@ function updateState(folder: string, update: (state: ArticleState) => void | Pro
   return next
 }
 
-async function loadSource(folder: string, files: string[], storedSources?: string[]): Promise<{ sources: string[]; markdown: string; fingerprint: string }> {
+async function resolveSources(folder: string, available: string[], requested: string[]): Promise<{ sources: string[]; missingSources: boolean }> {
+  const realFolder = await fs.realpath(folder)
+  const key = (candidate: string): string => process.platform === 'win32' ? candidate.toLowerCase() : candidate
+  const canonical = new Map<string, string>()
+  for (const file of available) {
+    try {
+      const resolved = await fs.realpath(file), relative = path.relative(realFolder, resolved)
+      if (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative)) canonical.set(key(resolved), file)
+    } catch { /* A source removed during scanning is not a selectable source. */ }
+  }
+  const sources: string[] = []
+  let missingSources = false
+  for (const candidate of requested) {
+    let selected: string | undefined
+    try { selected = canonical.get(key(await fs.realpath(candidate))) } catch { /* Report it as missing below. */ }
+    if (!selected) missingSources = true
+    else if (!sources.includes(selected)) sources.push(selected)
+  }
+  return { sources, missingSources }
+}
+
+async function loadSource(folder: string, files: string[], storedSources?: string[]): Promise<{ sources: string[]; markdown: string; fingerprint: string; missingSources: boolean }> {
   const available = files.filter(file => MARKDOWN_EXTENSIONS.has(path.extname(file).toLowerCase()))
-  const sources = storedSources ? storedSources.filter(file => available.includes(file)) : available.slice(0, 1)
+  const { sources, missingSources } = await resolveSources(folder, available, storedSources ?? available.slice(0, 1))
   const contents = await Promise.all(sources.map(file => fs.readFile(file, 'utf8').then(text => text.replace(/^\uFEFF/, ''))))
-  return { sources, markdown: contents.join('\n\n'), fingerprint: createHash('sha256').update(JSON.stringify(sources.map((file, i) => [file, contents[i]]))).digest('hex') }
+  return { sources, missingSources, markdown: contents.join('\n\n'), fingerprint: createHash('sha256').update(JSON.stringify(sources.map((file, i) => [file, contents[i]]))).digest('hex') }
 }
 
 function titleFromMarkdown(markdown: string, folderName: string): string {
@@ -170,12 +198,12 @@ function archiveDrafts(state: ArticleState, drafts: ArticleRecord['drafts'], sou
 
 export async function selectSources(folder: string, sources: string[]): Promise<void> {
   const files = await collectFiles(folder)
-  const available = new Set(files.filter(file => MARKDOWN_EXTENSIONS.has(path.extname(file).toLowerCase())))
-  if (!sources.length || sources.some(file => !available.has(file))) throw new Error('请选择文章目录中的 MD 或 TXT 文件')
+  const resolved = await resolveSources(folder, files.filter(file => MARKDOWN_EXTENSIONS.has(path.extname(file).toLowerCase())), sources)
+  if (!resolved.sources.length || resolved.missingSources) throw new Error('请选择文章目录中的 MD 或 TXT 文件')
   await updateState(folder, async state => {
     const current = await loadSource(folder, files, state.selectedSources)
     archiveDrafts(state, completeDrafts(folder, state, current), current.sources)
-    const next = await loadSource(folder, files, [...new Set(sources)])
+    const next = await loadSource(folder, files, resolved.sources)
     state.selectedSources = next.sources
     state.sourceFingerprint = next.fingerprint
     state.sourceRevision = randomUUID()
@@ -234,8 +262,8 @@ async function scanArticle(folderPath: string): Promise<ArticleRecord | null> {
   let storedState: ArticleState = {}
   try { storedState = await readState(folderPath) } catch (error) { warnings.push(error instanceof Error ? error.message : String(error)) }
   if (!markdownFiles.length) warnings.push('未找到 MD / TXT 正文，请检查文件位置')
-  if (storedState.selectedSources?.some(file => !markdownFiles.includes(file))) warnings.push('部分已选正文文件已移动或删除，请重新选择来源')
   const source = await loadSource(folderPath, files, storedState.selectedSources)
+  if (source.missingSources) warnings.push('部分已选正文文件已移动或删除，请重新选择来源')
   const sourceChanged = !!storedState.sourceFingerprint && storedState.sourceFingerprint !== source.fingerprint
   if (sourceChanged) warnings.push('正文来源内容已变化，当前平台草稿已保留；请检查来源并应用以重新派生，旧稿会归档')
   const folderStats = await fs.stat(folderPath)
@@ -248,9 +276,9 @@ async function scanArticle(folderPath: string): Promise<ArticleRecord | null> {
   const images = (await Promise.all(imageFiles.map(async filePath => {
     const name = path.relative(folderPath, filePath), extension = path.extname(filePath).toLowerCase()
     try {
-      const stats = await fs.stat(filePath), thumb = await makeThumbnail(filePath, extension, `${stats.mtimeMs}:${stats.ctimeMs}:${stats.size}`)
+      const stats = await fs.stat(filePath), canonicalPath = await fs.realpath(filePath), thumb = await makeThumbnail(filePath, extension, `${stats.mtimeMs}:${stats.ctimeMs}:${stats.size}`)
       if (!thumb.dataUrl) warnings.push(`无法读取图片：${name}`)
-      return { id: idFor(filePath), name, path: filePath, extension, width: thumb.width, height: thumb.height, format: thumb.format, size: stats.size, thumbnailDataUrl: thumb.dataUrl, derivatives: derivatives.filter(item => item.sourcePath === filePath) }
+      return { id: idFor(filePath), name, path: filePath, extension, width: thumb.width, height: thumb.height, format: thumb.format, size: stats.size, thumbnailDataUrl: thumb.dataUrl, derivatives: derivatives.filter(item => item.sourcePath === canonicalPath) }
     } catch { warnings.push(`图片已移动或无法读取：${name}`); return null }
   }))).filter((image): image is NonNullable<typeof image> => image !== null)
   return {

@@ -64,8 +64,12 @@ export async function generateDerivedAsset(input: GenerateAssetInput): Promise<D
 
 async function generateSerial(input: GenerateAssetInput, article: string): Promise<DerivedAsset> {
   const lexical = path.resolve(input.sourcePath)
-  if (!inside(article, lexical) || !IMAGE_EXTENSIONS.has(path.extname(lexical).toLowerCase())) throw new Error('图片来源必须是当前文章内的有效图片')
-  const sourcePath = await fs.realpath(lexical)
+  if (!IMAGE_EXTENSIONS.has(path.extname(lexical).toLowerCase())) throw new Error('图片来源必须是当前文章内的有效图片')
+  // Windows short names and directory aliases can look outside the canonical article while resolving inside it.
+  const sourcePath = await fs.realpath(lexical).catch(error => {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new Error('当前文章原图不存在或已移动')
+    throw error
+  })
   if (!inside(article, sourcePath) || inside(path.join(article, '.draftdock'), sourcePath) || !(await fs.stat(sourcePath)).isFile()) throw new Error('原图路径不在当前文章素材目录内')
   const manifest = await readManifest(article)
   // Materialize orientation and SVG rasterization before applying any pixel coordinates.
