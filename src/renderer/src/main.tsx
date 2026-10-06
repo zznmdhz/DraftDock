@@ -26,11 +26,11 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren, { failed: b
   render() { return this.state.failed ? <Failure /> : this.props.children }
 }
 function Failure() {
-  return <div style={{ padding: 48, fontFamily: 'sans-serif' }}><h1>稿间暂时无法显示页面</h1><p>启动异常已记录。请打开日志文件夹，将日志提供给维护者。</p><button onClick={() => location.reload()}>重新加载</button> <button onClick={() => { void window.draftdock?.openLogs() }}>打开日志文件夹</button><p>如果按钮无响应，请按 Alt 打开“帮助”菜单。</p></div>
+  return <div style={{ padding: 48, fontFamily: 'sans-serif' }}><h1>稿间暂时无法显示页面</h1><p>启动异常已记录。请打开日志文件夹，将日志提供给维护者。</p><button onClick={() => window.draftdock ? window.draftdock.requestReload() : location.reload()}>重新加载</button> <button onClick={() => { void window.draftdock?.openLogs() }}>打开日志文件夹</button><p>如果按钮无响应，请按 Alt 打开“帮助”菜单。</p></div>
 }
 function Root() {
   React.useEffect(() => { window.draftdock?.report({ level: 'info', event: 'ready', message: 'React mounted; desktop bridge available' }) }, [])
-  return <><button style={{ position: 'fixed', right: 16, bottom: 12, zIndex: 200 }} onClick={() => { void window.draftdock.openLogs() }}>诊断日志</button><App /></>
+  return <App />
 }
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode><ErrorBoundary>{window.draftdock ? <Root /> : <Failure />}</ErrorBoundary></React.StrictMode>

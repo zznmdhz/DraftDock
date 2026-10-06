@@ -1,4 +1,7 @@
-export type Platform = 'master' | 'wechat' | 'xiaohongshu'
+export type Platform = 'master' | 'wechat' | 'xiaohongshu' | 'x' | 'zhihu'
+export type PublishingPlatform = Exclude<Platform, 'master'>
+export type LibraryMode = 'auto' | 'package' | 'library'
+export interface DeliveryImage { sourcePath: string; outputPath?: string }
 export type AdaptMode = 'cover' | 'contain'
 
 export interface CropRect {
@@ -8,7 +11,10 @@ export interface CropRect {
   height: number
 }
 
+export interface Composition { zoom: number; offsetX: number; offsetY: number }
+
 export interface DerivedAsset {
+  composition?: Composition
   id: string
   sourcePath: string
   outputPath: string
@@ -39,9 +45,20 @@ export interface PlatformDraft {
   title: string
   markdown: string
   updatedAt: string
+  images?: DeliveryImage[]
+  account?: string
+  status?: 'draft' | 'ready' | 'published'
+  publishedUrl?: string
+  notes?: string
+  limits?: { text?: number; title?: number; images?: number }
 }
 
+export interface DraftHistory { id: string; savedAt: string; drafts: Partial<Record<Platform, PlatformDraft>>; selectedSources?: string[] }
+
 export interface ArticleRecord {
+  sourceFiles: { path: string; name: string }[]
+  selectedSources: string[]
+  sourceRevision: string
   id: string
   title: string
   folderName: string
@@ -52,15 +69,20 @@ export interface ArticleRecord {
   images: ImageAsset[]
   drafts: Partial<Record<Platform, PlatformDraft>>
   warnings: string[]
+  history: DraftHistory[]
+  sourceChanged: boolean
 }
 
 export interface LibrarySnapshot {
   rootPath: string | null
   articles: ArticleRecord[]
   scannedAt: string
+  mode?: LibraryMode
+  warnings?: string[]
 }
 
 export interface GenerateAssetInput {
+  composition?: Composition
   articleFolder: string
   sourcePath: string
   platform: Exclude<Platform, 'master'>
@@ -77,7 +99,11 @@ export interface SaveDraftInput {
   platform: Platform
   title: string
   markdown: string
+  details?: Omit<PlatformDraft, 'title' | 'markdown' | 'updatedAt'>
 }
+
+export interface BundleInput { articleFolder: string; platform: PublishingPlatform; draft: PlatformDraft }
+export interface BundleResult { outputFolder: string; imageCount: number; warnings: string[] }
 
 export interface ExportDocxInput {
   articleFolder: string
@@ -93,10 +119,14 @@ export interface ClipboardInput {
 }
 
 export interface DraftDockApi {
+  requestReload(): void
+  exportBundle(input: BundleInput): Promise<BundleResult>
+  restoreHistory(articleFolder: string, id: string): Promise<LibrarySnapshot>
+  selectSources(articleFolder: string, paths: string[]): Promise<LibrarySnapshot>
   openLogs(): Promise<string>
   report(input: { level: 'info' | 'error'; event: string; message: string }): void
   getLibrary(): Promise<LibrarySnapshot>
-  chooseRoot(): Promise<LibrarySnapshot>
+  chooseRoot(mode?: LibraryMode): Promise<LibrarySnapshot>
   refreshLibrary(): Promise<LibrarySnapshot>
   loadImage(path: string): Promise<string>
   generateAsset(input: GenerateAssetInput): Promise<DerivedAsset>
@@ -107,4 +137,5 @@ export interface DraftDockApi {
   revealPath(path: string): Promise<void>
   startDrag(path: string): void
   onLibraryChanged(callback: (snapshot: LibrarySnapshot) => void): () => void
+  onBeforeClose(callback: () => Promise<void>): () => void
 }

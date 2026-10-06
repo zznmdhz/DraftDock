@@ -28,6 +28,7 @@ jobs:
       - run: pnpm build
       - run: pnpm exec electron-builder --win nsis portable --publish never
       - run: node scripts/smoke-packaged.mjs
+      - run: node scripts/smoke-workflow.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: DraftDock-Windows
